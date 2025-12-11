@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Item - InventoryTracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📦 InventoryTracker</div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="add-item.html" class="active">Add Item</a>
+            <a href="reports.html">Reports</a>
+            <span id="username" class="username"></span>
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Add New Item</h1>
+        
+        <div class="form-container">
+            <form id="addItemForm">
+                <div class="form-group">
+                    <label for="name">Item Name *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category *</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select Category</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Stationery">Stationery</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="stock">Initial Stock *</label>
+                    <input type="number" id="stock" name="stock" min="0" value="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="brand">Brand</label>
+                    <input type="text" id="brand" name="brand">
+                </div>
+                
+                <div class="form-group">
+                    <label for="color">Color</label>
+                    <input type="text" id="color" name="color">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                    <button type="button" onclick="window.location.href='dashboard.html'" class="btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        checkAuth();
+        document.getElementById('username').textContent = localStorage.getItem('username');
+
+        document.getElementById('addItemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                category: document.getElementById('category').value,
+                stock: parseInt(document.getElementById('stock').value),
+                details: {
+                    brand: document.getElementById('brand').value,
+                    color: document.getElementById('color').value,
+                    description: document.getElementById('description').value
+                }
+            };
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/items', {
+                    method: 'POST',
+                    headers: {
+                        ...getAuthHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Item added successfully!');
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert(data.message || 'Error adding item');
+                }
+            } catch (error) {
+                alert('Error adding item. Please ensure backend is running.');
+            }
+        });
+    </script>
+</body>
+</html>

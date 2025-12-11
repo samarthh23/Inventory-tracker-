@@ -1,0 +1,375 @@
+{
+  "info": {
+    "name": "InventoryTracker API",
+    "description": "Complete API collection for InventoryTracker NoSQL project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "Get All Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/items",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "items"]
+            }
+          }
+        },
+        {
+          "name": "Get Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/items/:id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "items", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ITEM_ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Monitor\",\n  \"category\": \"Electronics\",\n  \"stock\": 15,\n  \"details\": {\n    \"brand\": \"Dell\",\n    \"color\": \"Black\",\n    \"description\": \"24 inch LED monitor\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/items",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Monitor\",\n  \"category\": \"Electronics\",\n  \"details\": {\n    \"brand\": \"Dell\",\n    \"color\": \"Silver\",\n    \"description\": \"27 inch LED monitor\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/items/:id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "items", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ITEM_ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/items/:id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "items", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ITEM_ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Stock - Increase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"change\": 10,\n  \"reason\": \"New shipment received\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/items/:id/stock",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "items", ":id", "stock"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ITEM_ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Stock - Decrease",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"change\": -5,\n  \"reason\": \"Sold 5 units to customer\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/items/:id/stock",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "items", ":id", "stock"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "REPLACE_WITH_ITEM_ID"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Stock by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/reports/stock-by-category",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "reports", "stock-by-category"]
+            }
+          }
+        },
+        {
+          "name": "Low Stock Items (threshold=10)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/reports/low-stock?threshold=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "reports", "low-stock"],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Low Stock Items (threshold=20)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/reports/low-stock?threshold=20",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "reports", "low-stock"],
+              "query": [
+                {
+                  "key": "threshold",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recent Stock Changes (limit=10)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/reports/recent-stock-changes?limit=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "reports", "recent-stock-changes"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recent Stock Changes (limit=20)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "authenticated"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/reports/recent-stock-changes?limit=20",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "reports", "recent-stock-changes"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "health"]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - InventoryTracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📦 InventoryTracker</div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="add-item.html">Add Item</a>
+            <a href="reports.html">Reports</a>
+            <span id="username" class="username"></span>
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Inventory Dashboard</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Items</h3>
+                <p id="totalItems" class="stat-value">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Categories</h3>
+                <p id="totalCategories" class="stat-value">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Stock</h3>
+                <p id="totalStock" class="stat-value">0</p>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Stock</th>
+                        <th>Brand</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <tr>
+                        <td colspan="5" class="loading">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stock Update Modal -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Update Stock</h2>
+            <form id="stockForm">
+                <input type="hidden" id="modalItemId">
+                <div class="form-group">
+                    <label>Item: <span id="modalItemName"></span></label>
+                </div>
+                <div class="form-group">
+                    <label>Current Stock: <span id="modalCurrentStock"></span></label>
+                </div>
+                <div class="form-group">
+                    <label for="stockChange">Change Amount</label>
+                    <input type="number" id="stockChange" required>
+                    <small>Use negative numbers to decrease stock</small>
+                </div>
+                <div class="form-group">
+                    <label for="stockReason">Reason</label>
+                    <input type="text" id="stockReason" required placeholder="e.g., Sold 5 units">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Stock</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        checkAuth();
+        document.getElementById('username').textContent = localStorage.getItem('username');
+
+        let currentItems = [];
+
+        async function loadItems() {
+            try {
+                const response = await fetch('http://localhost:5000/api/items', {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentItems = data.data;
+                    displayItems(data.data);
+                    updateStats(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading items:', error);
+                document.getElementById('itemsTableBody').innerHTML = 
+                    '<tr><td colspan="5" class="error">Error loading items</td></tr>';
+            }
+        }
+
+        function displayItems(items) {
+            const tbody = document.getElementById('itemsTableBody');
+            
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No items found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td><span class="badge ${item.stock < 10 ? 'badge-danger' : 'badge-success'}">${item.stock}</span></td>
+                    <td>${item.details?.brand || 'N/A'}</td>
+                    <td class="actions">
+                        <button onclick="viewDetails('${item._id}')" class="btn btn-sm">View Details</button>
+                        <button onclick="openStockModal('${item._id}')" class="btn btn-sm btn-primary">Update Stock</button>
+                        <button onclick="deleteItem('${item._id}')" class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStats(items) {
+            document.getElementById('totalItems').textContent = items.length;
+            
+            const categories = new Set(items.map(item => item.category));
+            document.getElementById('totalCategories').textContent = categories.size;
+            
+            const totalStock = items.reduce((sum, item) => sum + item.stock, 0);
+            document.getElementById('totalStock').textContent = totalStock;
+        }
+
+        function viewDetails(itemId) {
+            window.location.href = `item-details.html?id=${itemId}`;
+        }
+
+        function openStockModal(itemId) {
+            const item = currentItems.find(i => i._id === itemId);
+            if (!item) return;
+            
+            document.getElementById('modalItemId').value = item._id;
+            document.getElementById('modalItemName').textContent = item.name;
+            document.getElementById('modalCurrentStock').textContent = item.stock;
+            document.getElementById('stockChange').value = '';
+            document.getElementById('stockReason').value = '';
+            document.getElementById('stockModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('stockModal').style.display = 'none';
+        }
+
+        document.getElementById('stockForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const itemId = document.getElementById('modalItemId').value;
+            const change = parseInt(document.getElementById('stockChange').value);
+            const reason = document.getElementById('stockReason').value;
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/items/${itemId}/stock`, {
+                    method: 'POST',
+                    headers: {
+                        ...getAuthHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ change, reason })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Stock updated successfully!');
+                    closeModal();
+                    loadItems();
+                } else {
+                    alert(data.message || 'Error updating stock');
+                }
+            } catch (error) {
+                alert('Error updating stock');
+            }
+        });
+
+        async function deleteItem(itemId) {
+            if (!confirm('Are you sure you want to delete this item?')) return;
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/items/${itemId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Item deleted successfully!');
+                    loadItems();
+                } else {
+                    alert(data.message || 'Error deleting item');
+                }
+            } catch (error) {
+                alert('Error deleting item');
+            }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('stockModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        loadItems();
+    </script>
+</body>
+</html>

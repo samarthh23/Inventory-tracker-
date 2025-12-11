@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - InventoryTracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📦 InventoryTracker</div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="add-item.html">Add Item</a>
+            <a href="reports.html" class="active">Reports</a>
+            <span id="username" class="username"></span>
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Inventory Reports</h1>
+        
+        <div class="report-buttons">
+            <button onclick="loadStockByCategory()" class="btn btn-primary">Stock by Category</button>
+            <button onclick="loadLowStock()" class="btn btn-primary">Low Stock Items</button>
+            <button onclick="loadRecentChanges()" class="btn btn-primary">Recent Stock Changes</button>
+        </div>
+
+        <div id="reportContainer" class="report-container">
+            <p class="info-text">Select a report to view</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        checkAuth();
+        document.getElementById('username').textContent = localStorage.getItem('username');
+
+        async function loadStockByCategory() {
+            const container = document.getElementById('reportContainer');
+            container.innerHTML = '<p class="loading">Loading...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/reports/stock-by-category', {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStockByCategory(data.data);
+                } else {
+                    container.innerHTML = '<p class="error">Error loading report</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p class="error">Error loading report</p>';
+            }
+        }
+
+        function displayStockByCategory(data) {
+            const container = document.getElementById('reportContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = '<p class="no-data">No data available</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <h2>Stock by Category</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Total Stock</th>
+                            <th>Number of Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(item => `
+                            <tr>
+                                <td><strong>${item._id}</strong></td>
+                                <td><span class="badge badge-success">${item.totalStock}</span></td>
+                                <td>${item.itemCount}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function loadLowStock() {
+            const threshold = prompt('Enter stock threshold (default: 10):', '10');
+            if (!threshold) return;
+            
+            const container = document.getElementById('reportContainer');
+            container.innerHTML = '<p class="loading">Loading...</p>';
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/reports/low-stock?threshold=${threshold}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayLowStock(data.data, data.threshold);
+                } else {
+                    container.innerHTML = '<p class="error">Error loading report</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p class="error">Error loading report</p>';
+            }
+        }
+
+        function displayLowStock(data, threshold) {
+            const container = document.getElementById('reportContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <h2>Low Stock Items (Below ${threshold})</h2>
+                    <p class="success-text">✅ No items below threshold!</p>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <h2>Low Stock Items (Below ${threshold})</h2>
+                <p class="warning-text">⚠️ ${data.length} item(s) need restocking</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Current Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(item => `
+                            <tr>
+                                <td><strong>${item.name}</strong></td>
+                                <td>${item.category}</td>
+                                <td><span class="badge badge-danger">${item.stock}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function loadRecentChanges() {
+            const container = document.getElementById('reportContainer');
+            container.innerHTML = '<p class="loading">Loading...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/reports/recent-stock-changes?limit=15', {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayRecentChanges(data.data);
+                } else {
+                    container.innerHTML = '<p class="error">Error loading report</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p class="error">Error loading report</p>';
+            }
+        }
+
+        function displayRecentChanges(data) {
+            const container = document.getElementById('reportContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = '<p class="no-data">No stock changes recorded</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <h2>Recent Stock Changes</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Change</th>
+                            <th>Reason</th>
+                            <th>Current Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(item => `
+                            <tr>
+                                <td>${new Date(item.date).toLocaleString()}</td>
+                                <td><strong>${item.name}</strong></td>
+                                <td>${item.category}</td>
+                                <td>
+                                    <span class="badge ${item.change > 0 ? 'badge-success' : 'badge-danger'}">
+                                        ${item.change > 0 ? '+' : ''}${item.change}
+                                    </span>
+                                </td>
+                                <td>${item.reason}</td>
+                                <td><span class="badge">${item.stock}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    </script>
+</body>
+</html>

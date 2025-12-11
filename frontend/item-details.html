@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Details - InventoryTracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📦 InventoryTracker</div>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="add-item.html">Add Item</a>
+            <a href="reports.html">Reports</a>
+            <span id="username" class="username"></span>
+            <button onclick="logout()" class="btn-logout">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Item Details</h1>
+            <button onclick="window.history.back()" class="btn">← Back</button>
+        </div>
+        
+        <div id="itemDetails" class="details-grid">
+            <p class="loading">Loading...</p>
+        </div>
+        
+        <h2>Stock Change History</h2>
+        <div class="table-container">
+            <table id="logsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Change</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                    <tr>
+                        <td colspan="3" class="loading">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        checkAuth();
+        document.getElementById('username').textContent = localStorage.getItem('username');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+
+        if (!itemId) {
+            alert('No item ID provided');
+            window.location.href = 'dashboard.html';
+        }
+
+        async function loadItemDetails() {
+            try {
+                const response = await fetch(`http://localhost:5000/api/items/${itemId}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayItemDetails(data.data);
+                    displayStockLogs(data.data.stock_logs);
+                } else {
+                    document.getElementById('itemDetails').innerHTML = 
+                        '<p class="error">Error loading item details</p>';
+                }
+            } catch (error) {
+                console.error('Error loading item:', error);
+                document.getElementById('itemDetails').innerHTML = 
+                    '<p class="error">Error loading item details</p>';
+            }
+        }
+
+        function displayItemDetails(item) {
+            const detailsDiv = document.getElementById('itemDetails');
+            detailsDiv.innerHTML = `
+                <div class="detail-card">
+                    <h3>Basic Information</h3>
+                    <p><strong>Name:</strong> ${item.name}</p>
+                    <p><strong>Category:</strong> ${item.category}</p>
+                    <p><strong>Current Stock:</strong> 
+                        <span class="badge ${item.stock < 10 ? 'badge-danger' : 'badge-success'}">
+                            ${item.stock}
+                        </span>
+                    </p>
+                </div>
+                
+                <div class="detail-card">
+                    <h3>Additional Details</h3>
+                    <p><strong>Brand:</strong> ${item.details?.brand || 'N/A'}</p>
+                    <p><strong>Color:</strong> ${item.details?.color || 'N/A'}</p>
+                    <p><strong>Description:</strong> ${item.details?.description || 'N/A'}</p>
+                </div>
+                
+                <div class="detail-card">
+                    <h3>Metadata</h3>
+                    <p><strong>Created:</strong> ${new Date(item.createdAt).toLocaleString()}</p>
+                    <p><strong>Last Updated:</strong> ${new Date(item.updatedAt).toLocaleString()}</p>
+                    <p><strong>Total Changes:</strong> ${item.stock_logs.length}</p>
+                </div>
+            `;
+        }
+
+        function displayStockLogs(logs) {
+            const tbody = document.getElementById('logsTableBody');
+            
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="no-data">No stock changes recorded</td></tr>';
+                return;
+            }
+            
+            // Sort by date descending
+            const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            tbody.innerHTML = sortedLogs.map(log => `
+                <tr>
+                    <td>${new Date(log.date).toLocaleString()}</td>
+                    <td>
+                        <span class="badge ${log.change > 0 ? 'badge-success' : 'badge-danger'}">
+                            ${log.change > 0 ? '+' : ''}${log.change}
+                        </span>
+                    </td>
+                    <td>${log.reason}</td>
+                </tr>
+            `).join('');
+        }
+
+        loadItemDetails();
+    </script>
+</body>
+</html>
