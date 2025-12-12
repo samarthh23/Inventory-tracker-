@@ -31,3 +31,11 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+const categoryRoutes = require('./routes/categories');
+const supplierRoutes = require('./routes/suppliers');
+const orderRoutes = require('./routes/orders');
+
+app.use('/api/categories', categoryRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/orders', orderRoutes);
